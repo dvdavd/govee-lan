@@ -1,0 +1,235 @@
+set_simple_scene:
+  name: Set simple scene
+  description: >
+    Activate a simple-scene-generator animation on a Govee LAN light.
+    Speed and colors are remembered for this scene and reused when selecting
+    the same SG effect from the light effect list.
+  target:
+    entity:
+      domain: light
+      integration: govee_lan
+  fields:
+    scene:
+      name: Scene
+      description: 'Animation name from the effect list (entries starting with "SG: ").'
+      required: true
+      example: "SG: Breathe"
+      selector:
+        text:
+    colors:
+      name: Colors
+      description: >
+        List of [R, G, B] color tuples for the animation palette.
+        Omit to reuse the remembered palette, or the default rainbow palette
+        if this scene has not been customized.
+      required: false
+      example: "[[255, 0, 0], [0, 255, 0]]"
+      selector:
+        object:
+    speed:
+      name: Speed
+      description: >
+        Animation speed from 0 (slow) to 100 (fast). Omit to reuse the
+        remembered speed, or 50 if this scene has not been customized.
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+    remember:
+      name: Remember
+      description: >
+        Save the resolved speed and colors for future effect-list selections.
+        Turn off to apply this call once without changing the remembered scene.
+      required: false
+      default: true
+      selector:
+        boolean:
+
+set_matrix_scene:
+  name: Set matrix scene
+  description: >
+    Activate a custom H6022 matrix scene from LED colour groups.
+  target:
+    entity:
+      domain: light
+      integration: govee_lan
+  fields:
+    groups:
+      name: Groups (single layer)
+      description: >
+        Single-layer colour groups. Each group has a color [R, G, B] and leds
+        containing H6022 matrix LED indices from 0 to 131.
+        Use 'layers' instead for multi-layer scenes.
+      required: false
+      example: >
+        [{"color": [255, 0, 0], "leds": [0, 1, 2, 3]},
+         {"color": [0, 0, 255], "leds": [12, 13, 14, 15]}]
+      selector:
+        object:
+    layers:
+      name: Layers (multi-layer)
+      description: >
+        List of up to 3 animation layers. Each layer has groups, and optional
+        mode, rate, level fields. Takes precedence over 'groups'.
+      required: false
+      example: >
+        [{"groups": [{"color": [255, 0, 0], "leds": [0, 1, 2]}], "mode": "up"},
+         {"groups": [{"color": [0, 0, 255], "leds": [12, 13]}], "mode": "twinkle"}]
+      selector:
+        object:
+    mode:
+      name: Mode
+      description: Matrix animation direction.
+      required: false
+      default: "twinkle"
+      selector:
+        select:
+          options:
+            - "twinkle"
+            - "up"
+            - "down"
+            - "left"
+            - "right"
+            - "up-left"
+            - "up-right"
+            - "down-left"
+            - "down-right"
+    level:
+      name: Level
+      description: Layer brightness/duty level from 0 to 100. Default is 100.
+      required: false
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+    rate:
+      name: Rate
+      description: Movement/twinkle cadence byte from 0 to 255. Default is 80.
+      required: false
+      default: 80
+      selector:
+        number:
+          min: 0
+          max: 255
+    background:
+      name: Background
+      description: Background [R, G, B] color. Default is black.
+      required: false
+      default: [0, 0, 0]
+      example: "[0, 0, 0]"
+      selector:
+        object:
+    bg_brightness:
+      name: Background brightness
+      description: Background opacity from 0 (transparent) to 100 (opaque).
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+
+save_matrix_scene:
+  name: Save matrix scene
+  description: >
+    Save a custom H6022 matrix scene as a preset in the light effect list.
+  target:
+    entity:
+      domain: light
+      integration: govee_lan
+  fields:
+    name:
+      name: Name
+      description: Preset name. It appears in the effect list as "Matrix: <name>".
+      required: true
+      example: "My Pixel Scene"
+      selector:
+        text:
+    groups:
+      name: Groups (single layer)
+      description: >
+        Single-layer colour groups. Each group has a color [R, G, B] and leds
+        containing H6022 matrix LED indices from 0 to 131.
+        Use 'layers' instead for multi-layer scenes.
+      required: false
+      selector:
+        object:
+    layers:
+      name: Layers (multi-layer)
+      description: >
+        List of up to 3 animation layers. Each layer has groups, and optional
+        mode, rate, level fields. Takes precedence over 'groups'.
+      required: false
+      selector:
+        object:
+    mode:
+      name: Mode
+      description: Matrix animation direction.
+      required: false
+      default: "twinkle"
+      selector:
+        select:
+          options:
+            - "twinkle"
+            - "up"
+            - "down"
+            - "left"
+            - "right"
+            - "up-left"
+            - "up-right"
+            - "down-left"
+            - "down-right"
+    level:
+      name: Level
+      description: Layer brightness/duty level from 0 to 100. Default is 100.
+      required: false
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+    rate:
+      name: Rate
+      description: Movement/twinkle cadence byte from 0 to 255. Default is 80.
+      required: false
+      default: 80
+      selector:
+        number:
+          min: 0
+          max: 255
+    background:
+      name: Background
+      description: Background [R, G, B] color. Default is black.
+      required: false
+      default: [0, 0, 0]
+      example: "[0, 0, 0]"
+      selector:
+        object:
+    bg_brightness:
+      name: Background brightness
+      description: Background opacity from 0 (transparent) to 100 (opaque).
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+
+delete_matrix_scene:
+  name: Delete matrix scene
+  description: >
+    Delete a saved H6022 matrix scene preset from the effect list.
+  target:
+    entity:
+      domain: light
+      integration: govee_lan
+  fields:
+    name:
+      name: Name
+      description: Exact preset name to delete.
+      required: true
+      example: "My Pixel Scene"
+      selector:
+        text:

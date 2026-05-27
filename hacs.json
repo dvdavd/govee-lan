@@ -1,0 +1,5 @@
+{
+  "name": "Govee LAN",
+  "render_readme": true,
+  "icon": "custom_components/govee_lan/brand/icon.png"
+}

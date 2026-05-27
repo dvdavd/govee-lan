@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Govee LAN lamp",
+        "description": "Select a discovered lamp or enter the details manually.",
+        "data": {
+          "device": "Device"
+        }
+      },
+      "manual": {
+        "title": "Add Govee LAN lamp manually",
+        "description": "Enter the local IP address and model/SKU of a Govee lamp with LAN control enabled.",
+        "data": {
+          "name": "Name",
+          "host": "Host",
+          "sku": "Model / SKU",
+          "skip_validation": "Skip connection test"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the lamp. Check the IP address and confirm LAN control is enabled in the Govee app."
+    },
+    "abort": {
+      "already_configured": "This lamp is already configured."
+    }
+  }
+}
