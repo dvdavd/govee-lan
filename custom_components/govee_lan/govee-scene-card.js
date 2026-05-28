@@ -732,9 +732,9 @@ const MATRIX_CSS = `
   }
   .toolbar {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 10px;
-    align-items: end;
+    align-items: start;
   }
   .preset-row {
     display: grid;
@@ -1212,6 +1212,7 @@ class GoveeMatrixCard extends HTMLElement {
     this._bgBrightness = 100;
     this._sending = false;
     this._painting = false;
+    this._rightPainting = false;
     this._shapeStart = null;
     this._previewIndices = [];
     this._activePresetName = null;
@@ -1255,28 +1256,8 @@ class GoveeMatrixCard extends HTMLElement {
     card.innerHTML = `
       <div class="card-content">
         <div class="field">
-          <div class="palette-header">
-            <div class="label">Paint</div>
-            <button class="reset-btn" id="matrix-reset-btn">Reset</button>
-          </div>
-          <div class="palette" id="matrix-palette"></div>
-          <div class="bg-controls" id="bg-controls" style="display:${(this._paintTarget === "bg" && this._bgColor !== null) ? "" : "none"}">
-            <div class="bg-brightness-row" id="bg-brightness-row">
-              <span class="label">Brightness</span>
-              <ha-slider id="bg-brightness-slider" min="0" max="100" value="${this._bgBrightness}" step="1" style="flex:1"></ha-slider>
-              <span class="speed-value" id="bg-brightness-value">${this._bgBrightness}</span>
-            </div>
-          </div>
-        </div>
-        <div class="field">
           <div class="palette-header pixel-header">
-            <div class="pixel-header-left">
-              <div class="label">Pixel Editor</div>
-              <div class="paint-target-tabs">
-                <button class="paint-target-tab${this._paintTarget === "fg" ? " active" : ""}" id="paint-fg-btn">FG</button>
-                <button class="paint-target-tab${this._paintTarget === "bg" ? " active" : ""}" id="paint-bg-btn">BG</button>
-              </div>
-            </div>
+            <div class="label">Pixel Editor</div>
             <div class="layer-control">
               <div class="label">Layer</div>
               <div class="layer-tabs">
@@ -1300,6 +1281,26 @@ class GoveeMatrixCard extends HTMLElement {
               <button class="icon-btn danger" id="clear-btn" title="Clear layer" aria-label="Clear layer">${MATRIX_TOOL_ICONS.trash}</button>
             </div>
             <div class="grid" id="matrix-grid"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="palette-header">
+            <div class="pixel-header-left">
+              <div class="label">Colour</div>
+              <div class="paint-target-tabs">
+                <button class="paint-target-tab${this._paintTarget === "fg" ? " active" : ""}" id="paint-fg-btn">Foreground</button>
+                <button class="paint-target-tab${this._paintTarget === "bg" ? " active" : ""}" id="paint-bg-btn">Background</button>
+              </div>
+            </div>
+            <button class="reset-btn" id="matrix-reset-btn">Reset</button>
+          </div>
+          <div class="palette" id="matrix-palette"></div>
+          <div class="bg-controls" id="bg-controls" style="display:${(this._paintTarget === "bg" && this._bgColor !== null) ? "" : "none"}">
+            <div class="bg-brightness-row" id="bg-brightness-row">
+              <span class="label">Brightness</span>
+              <ha-slider id="bg-brightness-slider" min="0" max="100" value="${this._bgBrightness}" step="1" style="flex:1"></ha-slider>
+              <span class="speed-value" id="bg-brightness-value">${this._bgBrightness}</span>
+            </div>
           </div>
         </div>
         <div class="toolbar">
@@ -1478,33 +1479,48 @@ class GoveeMatrixCard extends HTMLElement {
     bgSlider.addEventListener("change", onBgBrightnessCommit);
 
     const grid = root.getElementById("matrix-grid");
+    grid.addEventListener("contextmenu", (e) => e.preventDefault());
     grid.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       const index = this._indexFromPoint(e.clientX, e.clientY);
       if (!Number.isInteger(index)) return;
+      if (e.button === 2) {
+        this._rightPainting = true;
+        this._paintIndices([index], null);
+        grid.setPointerCapture?.(e.pointerId);
+        return;
+      }
       this._shapeStart = index;
       this._painting = true;
       grid.setPointerCapture?.(e.pointerId);
       this._handleToolDown(index);
     });
     grid.addEventListener("pointermove", (e) => {
-      if (!this._painting) return;
       e.preventDefault();
       const index = this._indexFromPoint(e.clientX, e.clientY);
-      if (Number.isInteger(index)) this._handleToolMove(index);
+      if (!Number.isInteger(index)) return;
+      if (this._rightPainting) {
+        this._paintIndices([index], null);
+        return;
+      }
+      if (this._painting) this._handleToolMove(index);
     });
     grid.addEventListener("pointerup", (e) => {
-      const index = this._indexFromPoint(e.clientX, e.clientY);
-      if (Number.isInteger(index)) this._handleToolUp(index);
-      this._clearPreview();
+      if (!this._rightPainting) {
+        const index = this._indexFromPoint(e.clientX, e.clientY);
+        if (Number.isInteger(index)) this._handleToolUp(index);
+        this._clearPreview();
+        this._shapeStart = null;
+      }
       this._painting = false;
-      this._shapeStart = null;
+      this._rightPainting = false;
       grid.releasePointerCapture?.(e.pointerId);
     });
 
     window.addEventListener("pointerup", () => {
       this._clearPreview();
       this._painting = false;
+      this._rightPainting = false;
       this._shapeStart = null;
     });
   }

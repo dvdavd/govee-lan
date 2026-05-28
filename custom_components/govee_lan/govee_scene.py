@@ -325,3 +325,53 @@ def build_h6022_matrix_scene_multi(
             data += _h6022_block_header(len(gdata), len(blocks[i]["groups"]))
         data += gdata + tail
     return base64.b64encode(bytes(data)).decode()
+
+
+_SHORT_PRESET_BASES: dict[str, dict] = {
+    "breathe":  {"code": 8505, "controls": (0x05, 0x00, 0x23), "palette": [
+        (0x00, 0x96, 0x14), (0xdd, 0xdf, 0x00), (0xe3, 0xe5, 0x16), (0xff, 0xab, 0x00),
+        (0xf7, 0x79, 0x76), (0xd8, 0x83, 0xff), (0x93, 0x36, 0xfd), (0x3a, 0x86, 0xff),
+    ]},
+    "gradient": {"code": 8506, "controls": (0x00, 0x00, 0x08), "palette": [
+        (0x5a, 0x00, 0x84), (0x6c, 0x00, 0xa5), (0x4b, 0x19, 0xb7), (0x00, 0x8c, 0x00),
+        (0x00, 0x95, 0x4c), (0x06, 0x72, 0xff), (0x22, 0x23, 0xf6), (0x00, 0x34, 0xa0),
+    ]},
+    "graffiti": {"code": 8507, "controls": (0x52, 0x39, 0x48), "palette": [
+        (0xff, 0xbe, 0x0b), (0xfb, 0x56, 0x07), (0xff, 0x00, 0x00), (0x83, 0x38, 0xec),
+        (0x00, 0x3a, 0xb7), (0x00, 0xff, 0x00), (0x00, 0x00, 0xff), (0x00, 0xff, 0xff),
+    ]},
+    "dreamlike": {"code": 8508, "controls": (0x0e, 0x0e, 0x55), "palette": [
+        (0x52, 0xe3, 0xe1), (0xff, 0xab, 0x00), (0xf7, 0x79, 0x76), (0xd8, 0x83, 0xff), (0x93, 0x36, 0xfd),
+    ]},
+    "fire": {"code": 8505, "controls": (0x0f, 0x00, 0x23), "palette": [
+        (0xff, 0x00, 0x00), (0xff, 0x50, 0x00), (0xff, 0xb4, 0x00), (0xff, 0xff, 0x00),
+    ]},
+}
+
+
+def build_h6022_short_preset(
+    controls: tuple[int, int, int],
+    palette: list[tuple[int, int, int]],
+    pairs: list[tuple[int, int]] | None = None,
+) -> str:
+    """Build an H6022 short-preset scene param (base64).
+
+    controls: (control0, control1, control2) bytes — renderer and speed knobs
+    palette:  list of (r, g, b) tuples, 1–8 colors
+    pairs:    optional trailing byte pairs for the control0=0xff variant
+    """
+    import base64 as _b64
+    if not palette:
+        raise ValueError("palette must have at least 1 color")
+    if len(palette) > 8:
+        raise ValueError("palette may have at most 8 colors")
+    c0, c1, c2 = (x & 0xFF for x in controls)
+    palette_bytes = bytearray(b for rgb in palette for b in (rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF))
+    data = bytearray([0x00, c0, c1, c2, len(palette_bytes)]) + palette_bytes
+    if pairs:
+        pair_bytes = bytearray(b for pair in pairs for b in (pair[0] & 0xFF, pair[1] & 0xFF))
+        if len(pair_bytes) > 255:
+            raise ValueError("pair byte data may be at most 255 bytes")
+        data.append(len(pair_bytes))
+        data.extend(pair_bytes)
+    return _b64.b64encode(bytes(data)).decode()
