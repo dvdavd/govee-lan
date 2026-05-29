@@ -509,8 +509,10 @@ class GoveeLanLight(LightEntity):
             scene
             for scene in scenes
             if _sg_scene_controls(scene) is None
-            or NORMAL_EFFECT_ALIASES.get(scene["name"], scene["name"])
-            not in non_sg_effect_names
+            or (
+                scene["name"] in NORMAL_EFFECT_ALIASES
+                and NORMAL_EFFECT_ALIASES[scene["name"]] not in non_sg_effect_names
+            )
         ]
 
         scene_name_counts = {}
